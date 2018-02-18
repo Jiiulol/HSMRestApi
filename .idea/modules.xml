@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/HsmRestAPI.iml" filepath="$PROJECT_DIR$/.idea/modules/HsmRestAPI.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/HsmRestAPI_main.iml" filepath="$PROJECT_DIR$/.idea/modules/HsmRestAPI_main.iml" group="HsmRestAPI" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/HsmRestAPI_test.iml" filepath="$PROJECT_DIR$/.idea/modules/HsmRestAPI_test.iml" group="HsmRestAPI" />
+    </modules>
+  </component>
+</project>
