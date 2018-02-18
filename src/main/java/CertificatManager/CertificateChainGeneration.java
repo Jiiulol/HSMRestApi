@@ -1,3 +1,5 @@
+package CertificatManager;
+
 import sun.security.tools.keytool.CertAndKeyGen;
 import sun.security.x509.*;
 

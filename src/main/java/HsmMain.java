@@ -1,3 +1,4 @@
+import Communicator.HttpRequestHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.InetSocketAddress;

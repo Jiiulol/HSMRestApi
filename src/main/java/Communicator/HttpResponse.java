@@ -1,6 +1,8 @@
-import com.sun.net.httpserver.HttpExchange;
+package Communicator;
 
+import com.sun.net.httpserver.HttpExchange;
 import java.net.URI;
+import Serializer.*;
 
 public class HttpResponse {
     private int responseValue;
@@ -53,7 +55,7 @@ public class HttpResponse {
     private void SetGet() {
         System.out.println(_request.getPath());
         System.out.println(_request.getQuery());
-        Certificate cert = new Certificate();
+        SerializedCertificate cert = new SerializedCertificate();
         cert.Serialize();
         this.responseValue = 200;
         this.responseBody = "TODO";
