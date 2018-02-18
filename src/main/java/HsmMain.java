@@ -18,6 +18,8 @@ public class HsmMain {
                 System.out.println("web server starting...");
                 l_webServer.start();
             }
+            else
+                throw new Exception("No arguments found. please give a path corresponding to the location where you want to store your certifiactes");
         }
         catch (Exception e)
         {
