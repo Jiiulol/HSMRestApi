@@ -35,31 +35,35 @@ public class HttpResponse {
     }
 
     private void SetDelete() {
+        SerializedManager manager = new SerializedManager();
+        manager.DeleteCertificate(new SerializedCertificate());
         this.responseValue = 200;
         this.responseBody = "DELETED";
         this.responseSize = 7;
     }
 
     private void SetUpdate() {
+        SerializedManager manager = new SerializedManager();
+        manager.UpdateCertificate(new SerializedCertificate());
         this.responseValue = 200;
         this.responseBody = "PUT";
         this.responseSize = 3;
     }
 
     private void SetPost() {
+        SerializedManager manager = new SerializedManager();
+        manager.AddCertificate(new SerializedCertificate());
         this.responseValue = 200;
         this.responseBody = "ADDED";
         this.responseSize = 5;
     }
 
     private void SetGet() {
-        System.out.println(_request.getPath());
-        System.out.println(_request.getQuery());
-        SerializedCertificate cert = new SerializedCertificate();
-        cert.Serialize();
+        SerializedManager manager = new SerializedManager();
+        manager.GetCertificate("kek");
         this.responseValue = 200;
-        this.responseBody = "TODO";
-        this.responseSize = 4;
+        this.responseBody = "{Certif = \"toto\"}";
+        this.responseSize = 17;
     }
 
     public int getResponseValue() {
