@@ -1,39 +1,54 @@
 package Serializer;
 
-import javax.sound.midi.SysexMessage;
+import CertificatManager.CertificateGenerator;
+
 import java.io.*;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class SerializedManager {
 
-    public void AddCertificate(SerializedCertificate certif)
+    private static String _RevokePath;
+    private static String _certifPath;
+
+    // region Gestion certifs
+    public SerializableCertificate AddCertificate(Map<String, String> certifInfos)
     {
         try
         {
-            List<SerializedCertificate> certifList = GetCertifList();
+            List<SerializableCertificate> certifList = GetCertifList();
+            CertificateGenerator certGen = new CertificateGenerator();
+            X509Certificate certificate = certGen.generateCertificate(certifInfos);
+            SerializableCertificate certif = new SerializableCertificate(certificate, certGen.getLastKeypair());
             int tmp = Find(certif);
             if (tmp == -1) { // Certificat non existant donc on peut ajouter a la liste
                 certifList.add(certif);
                 SetCertifList(certifList);
                 System.out.println("Certificate Added");
+                return certif;
             }
         }
         catch (Exception e)
         {
             System.out.println(e.getMessage());
         }
+        return null;
     }
 
-    public void DeleteCertificate(SerializedCertificate certif)
+    public void DeleteCertificate(SerializableCertificate certif)
     {
         try
         {
-            List<SerializedCertificate> certifList = GetCertifList();
+            List<SerializableCertificate> certifList = GetCertifList();
+            List<SerializableCertificate> RevokedCertifList = GetRevokedList();
             int tmp = Find(certif);
             if (tmp >= 0) { // Certificat existant donc on peut le supprimer
                 certifList.remove(tmp);
+                RevokedCertifList.add(certif);
                 SetCertifList(certifList);
+                SetRevokeList(RevokedCertifList);
                 System.out.println("Certificate Removed");
             }
         }
@@ -43,11 +58,11 @@ public class SerializedManager {
         }
     }
 
-    public void UpdateCertificate(SerializedCertificate certif)
+    public void UpdateCertificate(SerializableCertificate certif)
     {
         try
         {
-            List<SerializedCertificate> certifList = GetCertifList();
+            List<SerializableCertificate> certifList = GetCertifList();
             int tmp = Find(certif);
             if (tmp >= 0) { // Certificat existant donc on peut le modifier
                 certifList.remove(tmp);
@@ -62,17 +77,39 @@ public class SerializedManager {
         }
     }
 
-    public SerializedCertificate GetCertificate(String infos)
-    {
+    public SerializableCertificate GetCertificate(Map<String, String> CertifInfo) throws Exception {
+        String distinguishedName = "";
+        for (int i = 0; i < CertifInfo.size(); ++i) {
+            distinguishedName += CertifInfo.keySet().toArray()[i] + "=" + CertifInfo.values().toArray()[i];
+            if (i != CertifInfo.size() - 1)
+                distinguishedName += ", ";
+        }
+
+        List<SerializableCertificate> list = GetCertifList();
+        for (SerializableCertificate cert : list)
+        {
+            X509Certificate certif = cert.getCertif();
+            if (certif.getSubjectX500Principal().toString().equals(distinguishedName))
+                return cert;
+        }
         return null;
-        // TODO
     }
 
-    private int Find(SerializedCertificate certif)
+    public SerializableCertificate GetCertificate(String certif) throws Exception {
+        List<SerializableCertificate> list = GetCertifList();
+        for (SerializableCertificate cert : list)
+        {
+            if (cert.get_certifString().equals(certif))
+                return cert;
+        }
+        return null;
+    }
+
+    private int Find(SerializableCertificate certif)
     {
         try
         {
-            List<SerializedCertificate> certifList = GetCertifList();
+            List<SerializableCertificate> certifList = GetCertifList();
             for (int i = 0; i < certifList.size(); ++i)
             {
                 if (certifList.get(i).equals(certif))
@@ -86,9 +123,19 @@ public class SerializedManager {
             return -1;
         }
     }
+    // endregion
 
-    private List<SerializedCertificate> GetCertifList() throws Exception {
-        File file = new File(_path);
+    // region certifList
+    private List<SerializableCertificate> GetCertifList() throws Exception {
+        return getSerializableCertificates(_certifPath);
+    }
+
+    private List<SerializableCertificate> GetRevokedList() throws Exception{
+        return getSerializableCertificates(_RevokePath);
+    }
+
+    private List<SerializableCertificate> getSerializableCertificates(String path) throws IOException {
+        File file = new File(path);
 
         FileInputStream fis = new FileInputStream(file);
         byte[] data = new byte[(int) file.length()];
@@ -97,22 +144,33 @@ public class SerializedManager {
 
         String str = new String(data, "UTF-8");
 
-        List<SerializedCertificate> certifList;
+        List<SerializableCertificate> certifList;
         if (str.length() > 0)
-            certifList = SerializedCertificate.DeserializeList(str);
+            certifList = SerializableCertificate.DeserializeList(str);
         else
             certifList = new ArrayList<>();
 
         return certifList;
     }
 
-    private void SetCertifList(List<SerializedCertificate> certifList) throws Exception
+
+    private void SetCertifList(List<SerializableCertificate> certifList) throws Exception
     {
+        SetList(certifList, _certifPath);
+    }
+
+
+    private void SetRevokeList(List<SerializableCertificate> certifList) throws Exception
+    {
+        SetList(certifList, _RevokePath);
+    }
+
+    private void SetList(List<SerializableCertificate> certifList, String revokePath) throws IOException {
         try
         {
-            File file = new File(_path);
+            File file = new File(revokePath);
             FileWriter fileWriter = new FileWriter(file, false);
-            fileWriter.write(SerializedCertificate.SerializeList(certifList));
+            fileWriter.write(SerializableCertificate.SerializeList(certifList));
             fileWriter.close();
         }
         catch (Exception e)
@@ -122,13 +180,11 @@ public class SerializedManager {
         }
     }
 
-    private static String _path;
-
-    public static String get_path() {
-        return _path;
+    public static String get_certifPath() {
+        return _certifPath;
     }
 
-    public static void set_path(String in_path) throws Exception {
+    public static void set_certifPath(String in_path) throws Exception {
         File file = new File(in_path);
 
         if (!file.exists())
@@ -136,10 +192,13 @@ public class SerializedManager {
         if (!file.isDirectory())
             throw new Exception("Invalid path. Specify a directory.");
 
-        _path = in_path + File.separator + "certificats.json";
-        file = new File(_path);
+        _RevokePath = in_path + File.separator + "Revocation.json";
+        _certifPath = in_path + File.separator + "certificats.json";
+        file = new File(_certifPath);
 
         if (!file.exists())
             file.createNewFile();
     }
+
+    // endregion
 }

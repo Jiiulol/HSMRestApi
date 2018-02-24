@@ -1,30 +1,34 @@
 package CertificatManager;
 
-import javafx.util.Pair;
-import sun.misc.BASE64Encoder;
-import sun.security.provider.X509Factory;
 import sun.security.x509.*;
+
+import javax.xml.bind.DatatypeConverter;
 import java.io.StringBufferInputStream;
 import java.security.cert.*;
 import java.security.*;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 import java.io.IOException;
-import java.util.List;
 
 public class CertificateGenerator {
 
-    public X509Certificate generateCertificate(List<Pair<String, String>> ownerInfo)
+    private KeyPair lastKeypair;
+
+    public KeyPair getLastKeypair() {
+        return lastKeypair;
+    }
+
+    public X509Certificate generateCertificate(Map<String, String> ownerInfo)
             throws GeneralSecurityException, IOException
-    {
+        {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        lastKeypair = keyPair;
 
         String distinguishedName = "";
 
         for (int i = 0; i < ownerInfo.size(); ++i) {
-            distinguishedName += ownerInfo.get(i).getKey() + "=" + ownerInfo.get(i).getValue();
+            distinguishedName += ownerInfo.keySet().toArray()[i] + "=" + ownerInfo.values().toArray()[i];
             if (i != ownerInfo.size() - 1)
                 distinguishedName += ", ";
         }
@@ -67,27 +71,12 @@ public class CertificateGenerator {
     }
 
     public String convertToPem(X509Certificate cert) throws CertificateEncodingException {
-        BASE64Encoder encoder = new BASE64Encoder();
-        String s = X509Factory.BEGIN_CERT + System.lineSeparator();
-        s += encoder.encode(cert.getEncoded());
-        s += System.lineSeparator() + X509Factory.END_CERT;
-        return s;
-    }
 
-    public static void main (String[] argv) throws Exception {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-        CertificateGenerator certGen = new CertificateGenerator();
-        List<Pair<String, String>> l = new ArrayList<>();
-        l.add(new Pair<>("C", "toto"));
-        l.add(new Pair<>("ST", "toto2"));
-        l.add(new Pair<>("L", "toto3"));
-        l.add(new Pair<>("O", "toto4"));
-        l.add(new Pair<>("OU", "toto5"));
-        l.add(new Pair<>("CN", "toto6"));
-        l.add(new Pair<>("email", "toto@toto.com"));
-        X509Certificate certificate = certGen.generateCertificate(l);
-        System.out.println(certGen.convertToPem(certificate));
+        String s = "";
+        s += "-----BEGIN CERTIFICATE-----\n";
+        s += DatatypeConverter.printBase64Binary(cert.getEncoded()) + "\n";
+        s += "-----END CERTIFICATE-----";
+        return s;
     }
 
     public X509Certificate CertificateFromString(String certifString) throws CertificateException {
@@ -95,5 +84,22 @@ public class CertificateGenerator {
         StringBufferInputStream inputstream = new StringBufferInputStream(certifString);
         CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
         return (X509Certificate)certFactory.generateCertificate(inputstream);
+    }
+
+    public static void main (String[] argv) throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        CertificateGenerator certGen = new CertificateGenerator();
+        Map<String, String> l = new Hashtable<>();
+
+        l.put("C", "toto");
+        l.put("ST", "toto2");
+        l.put("L", "toto3");
+        l.put("O", "toto4");
+        l.put("OU", "toto5");
+        l.put("CN", "toto6");
+        l.put("email", "toto@toto.com");
+        X509Certificate certificate = certGen.generateCertificate(l);
+        System.out.println(certGen.convertToPem(certificate));
     }
 }

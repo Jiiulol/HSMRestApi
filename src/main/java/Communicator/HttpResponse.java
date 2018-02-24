@@ -1,5 +1,7 @@
 package Communicator;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -23,20 +25,28 @@ public class HttpResponse {
     {
         _keyValDico = new Hashtable<>();
         _request = in_httpExchange;
-
+        JsonObject obj = new JsonObject();
         try {
             FillDico();
         }
         catch (Exception e)
         {
+            obj.addProperty("Error", e.getMessage());
             this.responseValue = 404;
-            this.responseBody = e.getMessage();
-            this.responseSize = e.getMessage().length();
+            this.responseBody = obj.toString();
+            this.responseSize = obj.toString().length();
             return;
         }
         switch (in_httpExchange.getRequestMethod()) {
             case "GET":
-                SetGet();
+                try {
+                    SetGet();
+                } catch (Exception e) {
+                    e.getMessage();
+                    obj.addProperty("Error", e.getMessage());
+                    this.responseBody = obj.toString();
+                    this.responseSize = obj.toString().length();
+                }
                 break;
             case "POST":
                 SetPost();
@@ -49,8 +59,9 @@ public class HttpResponse {
                 break;
             default:
                 this.responseValue = 404;
-                this.responseBody = "Page Not found";
-                this.responseSize = 14;
+                obj.addProperty("Errror", "Unhandled Request");
+                this.responseBody = obj.toString();
+                this.responseSize = obj.toString().length();
                 break;
         }
     }
@@ -80,9 +91,26 @@ public class HttpResponse {
             }
         }
     }
+
     private List<String> CheckDico() {
         ArrayList<String> tmplist = new ArrayList<>();
 
+        if (!_keyValDico.containsKey("C"))
+            tmplist.add("C");
+        if (!_keyValDico.containsKey("ST"))
+            tmplist.add("ST");
+        if (!_keyValDico.containsKey("L"))
+            tmplist.add("L");
+        if (!_keyValDico.containsKey("O"))
+            tmplist.add("O");
+        if (!_keyValDico.containsKey("OU"))
+            tmplist.add("OU");
+        if (!_keyValDico.containsKey("CN"))
+            tmplist.add("CN");
+        if (!_keyValDico.containsKey("email"))
+            tmplist.add("email");
+        if (!_keyValDico.containsKey("Certif"))
+            tmplist.add("Certif");
         return tmplist;
     }
     // endregion
@@ -92,29 +120,95 @@ public class HttpResponse {
         SerializedManager manager = new SerializedManager();
         List<String> missingValues = CheckDico();
         this.responseValue = 200;
-        this.responseBody = "DELETED";
-        this.responseSize = 7;
+        JsonObject obj = new JsonObject();
+        if (missingValues.contains("Certif")) {
+            obj.addProperty("Deleted", "Fail");
+            obj.addProperty("error", "No certificate value");
+        } else {
+            try {
+                manager.DeleteCertificate(manager.GetCertificate(_keyValDico.get("Certif")));
+                obj.addProperty("Deleted", "Success");
+            } catch (Exception e) {
+                e.printStackTrace();
+                obj.addProperty("Deleted", "Fail");
+                obj.addProperty("error", e.getMessage());
+            }
+            this.responseBody = obj.toString();
+            this.responseSize = obj.toString().length();
+        }
     }
 
     private void SetUpdate() {
         SerializedManager manager = new SerializedManager();
+        List<String> missingValues = CheckDico();
         this.responseValue = 200;
-        this.responseBody = "PUT";
-        this.responseSize = 3;
+        JsonObject obj = new JsonObject();
+        if (missingValues.contains("Certif")) {
+            obj.addProperty("Updated", "Fail");
+            obj.addProperty("error", "No certificat value");
+        } else
+            obj.addProperty("Updated", "Success");
+        this.responseBody = obj.toString();
+        this.responseSize = obj.toString().length();
     }
 
     private void SetPost() {
         SerializedManager manager = new SerializedManager();
+        List<String> missingValues = CheckDico();
         this.responseValue = 200;
-        this.responseBody = "ADDED";
-        this.responseSize = 5;
+        JsonObject obj = new JsonObject();
+        JsonArray array = new JsonArray();
+        if (missingValues.size() > 1 || missingValues.get(0).equals("Certif")) {
+            obj.addProperty("Created", "fail");
+            String response = "missing values : ";
+            for (String val : missingValues) {
+                if (val.equals(missingValues.get(missingValues.size() - 1))) {
+                    array.add(val);
+                }
+            }
+            obj.add("MissingList", array);
+        } else {
+            SerializableCertificate certif = manager.AddCertificate(_keyValDico);
+            obj.addProperty("Created", "Success");
+            obj.addProperty("certif", certif.get_certifString());
+            obj.addProperty("publicKey", certif.get_publicKeyString());
+        }
+        this.responseBody = obj.toString();
+        this.responseSize = obj.toString().length();
     }
 
-    private void SetGet() {
+    private void SetGet() throws Exception {
         SerializedManager manager = new SerializedManager();
         this.responseValue = 200;
-        this.responseBody = "{Certif = \"toto\"}";
-        this.responseSize = 17;
+        JsonObject obj = new JsonObject();
+        if (_keyValDico.containsKey("Certif"))
+        {
+            SerializableCertificate cert = manager.GetCertificate(_keyValDico.get("Certif"));
+            if (cert != null)
+            {
+            obj.addProperty("Found", "Success");
+            obj.addProperty("certif", cert.get_certifString());
+            obj.addProperty("publicKey", cert.get_publicKeyString());
+            }
+            else
+            {
+             obj.addProperty("Found", "Not found");
+            }
+        }
+        else
+        {
+            SerializableCertificate cert = manager.GetCertificate(_keyValDico);
+            if (cert == null)
+                obj.addProperty("Found", "Fail");
+            else
+            {
+                obj.addProperty("Found", "Success");
+                obj.addProperty("certif", cert.get_certifString());
+                obj.addProperty("publicKey", cert.get_publicKeyString());
+            }
+        }
+        this.responseBody = obj.toString();
+        this.responseSize = obj.toString().length();
     }
 
     // endregion
