@@ -158,11 +158,11 @@ public class HttpResponse {
         this.responseValue = 200;
         JsonObject obj = new JsonObject();
         JsonArray array = new JsonArray();
-        if (missingValues.size() > 1 || missingValues.get(0).equals("Certif")) {
+        if (missingValues.size() > 1 || !missingValues.get(0).equals("Certif")) {
             obj.addProperty("Created", "fail");
             String response = "missing values : ";
             for (String val : missingValues) {
-                if (val.equals(missingValues.get(missingValues.size() - 1))) {
+                if (!val.equals(missingValues.get(missingValues.size() - 1))) {
                     array.add(val);
                 }
             }
