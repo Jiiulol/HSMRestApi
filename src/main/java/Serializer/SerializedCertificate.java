@@ -1,55 +1,55 @@
 package Serializer;
 
+import CertificatManager.CertificateGenerator;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.security.KeyPair;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SerializedCertificate {
-    public String Country;
-    public String Organization;
-    public String Domain;
-    public String Validity;
-    public String BitsForKey;
-    public String PassPhrase;
-    public String OrganizationUnitName;
-    public String LocalityName;
-    public String Mail;
-    public String Certificate;
-    public String PrivateKey;
 
-    public SerializedCertificate(String country, String organization, String domain, String validity, String bitsForKey, String passPhrase, String organizationUnitName, String localityName, String mail, String certificate, String privateKey)
+    // region members
+    private String _certifString;
+    private String _publicKeyString;
+    private String _privateKeyString;
+    // endregion
+
+    // region Constructors
+
+    public SerializedCertificate(X509Certificate certif, KeyPair keypair)
     {
-        Country = country;
-        Organization = organization;
-        Domain = domain;
-        Validity = validity;
-        BitsForKey = bitsForKey;
-        PassPhrase = passPhrase;
-        OrganizationUnitName = organizationUnitName;
-        LocalityName = localityName;
-        Mail = mail;
-        Certificate = certificate;
-        PrivateKey = privateKey;
+        CertificateGenerator generator = new CertificateGenerator();
+        try {
+            _certifString = generator.convertToPem(certif);
+            _publicKeyString = keypair.getPublic().toString();
+            _publicKeyString = keypair.getPrivate().toString();
+        } catch (CertificateEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
-    public SerializedCertificate()
-    {
-        Country = "";
-        Organization = "";
-        Domain = "";
-        Validity = "";
-        BitsForKey = "";
-        PassPhrase = "";
-        OrganizationUnitName = "";
-        LocalityName = "";
-        Mail = "";
-        Certificate = "";
-        PrivateKey = "";
+    public SerializedCertificate(String _certifString, String _publicKeyString, String _privateKeyString) {
+        this._certifString = _certifString;
+        this._publicKeyString = _publicKeyString;
+        this._privateKeyString = _privateKeyString;
     }
 
+    // endregion
+
+    // region Generation
+    public X509Certificate GetCertificate() throws CertificateException {
+        CertificateGenerator generator = new CertificateGenerator();
+        return generator.CertificateFromString(_certifString);
+    }
+    // endregion
+
+    // region Serialization
     public String Serialize()
     {
         Gson gson = new Gson();
@@ -63,8 +63,7 @@ public class SerializedCertificate {
             SerializedCertificate certif = (SerializedCertificate)obj;
 
             Gson gson = new Gson();
-            if (gson.toJson(this).equals(gson.toJson(certif)))
-                return true;
+            return gson.toJson(this).equals(gson.toJson(certif));
         }
         return false;
     }
@@ -86,5 +85,7 @@ public class SerializedCertificate {
         Type listOfTestObject = new TypeToken<List<SerializedCertificate>>(){}.getType();
         return gson.toJson(certifList, listOfTestObject);
     }
+
+    // endregion
 }
 
