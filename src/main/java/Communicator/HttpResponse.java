@@ -88,21 +88,21 @@ public class HttpResponse {
     private List<String> CheckDico() {
         ArrayList<String> tmplist = new ArrayList<>();
 
-        if (!_keyValDico.containsKey("C") || _keyValDico.get("C") == "")
+        if (!_keyValDico.containsKey("C") || _keyValDico.get("C").length() == 0)
             tmplist.add("C");
-        if (!_keyValDico.containsKey("ST") || _keyValDico.get("ST") == "")
+        if (!_keyValDico.containsKey("ST") || _keyValDico.get("ST").length() == 0)
             tmplist.add("ST");
-        if (!_keyValDico.containsKey("L") || _keyValDico.get("L") == "")
+        if (!_keyValDico.containsKey("L") || _keyValDico.get("L").length() == 0)
             tmplist.add("L");
-        if (!_keyValDico.containsKey("O") || _keyValDico.get("O") == "")
+        if (!_keyValDico.containsKey("O") || _keyValDico.get("O").length() == 0)
             tmplist.add("O");
-        if (!_keyValDico.containsKey("OU") || _keyValDico.get("OU") == "")
+        if (!_keyValDico.containsKey("OU") || _keyValDico.get("OU").length() == 0)
             tmplist.add("OU");
-        if (!_keyValDico.containsKey("CN") || _keyValDico.get("CN") == "")
+        if (!_keyValDico.containsKey("CN") || _keyValDico.get("CN").length() == 0)
             tmplist.add("CN");
-        if (!_keyValDico.containsKey("email") || _keyValDico.get("email") == "")
+        if (!_keyValDico.containsKey("email") || _keyValDico.get("email").length() == 0)
             tmplist.add("email");
-        if (!_keyValDico.containsKey("Certif") || _keyValDico.get("Certif") == "")
+        if (!_keyValDico.containsKey("Certif") || _keyValDico.get("Certif").length() == 0)
             tmplist.add("Certif");
         return tmplist;
     }
