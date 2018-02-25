@@ -1,5 +1,6 @@
 package Communicator;
 
+import CertificatManager.CertificateGenerator;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
@@ -87,21 +88,21 @@ public class HttpResponse {
     private List<String> CheckDico() {
         ArrayList<String> tmplist = new ArrayList<>();
 
-        if (!_keyValDico.containsKey("C"))
+        if (!_keyValDico.containsKey("C") && _keyValDico.get("C") != "")
             tmplist.add("C");
-        if (!_keyValDico.containsKey("ST"))
+        if (!_keyValDico.containsKey("ST") && _keyValDico.get("ST") != "")
             tmplist.add("ST");
-        if (!_keyValDico.containsKey("L"))
+        if (!_keyValDico.containsKey("L") && _keyValDico.get("L") != "")
             tmplist.add("L");
-        if (!_keyValDico.containsKey("O"))
+        if (!_keyValDico.containsKey("O") && _keyValDico.get("O") != "")
             tmplist.add("O");
-        if (!_keyValDico.containsKey("OU"))
+        if (!_keyValDico.containsKey("OU") && _keyValDico.get("OU") != "")
             tmplist.add("OU");
-        if (!_keyValDico.containsKey("CN"))
+        if (!_keyValDico.containsKey("CN") && _keyValDico.get("CN") != "")
             tmplist.add("CN");
-        if (!_keyValDico.containsKey("email"))
+        if (!_keyValDico.containsKey("email") && _keyValDico.get("email") != "")
             tmplist.add("email");
-        if (!_keyValDico.containsKey("Certif"))
+        if (!_keyValDico.containsKey("Certif") && _keyValDico.get("Certif") != "")
             tmplist.add("Certif");
         return tmplist;
     }
@@ -171,7 +172,9 @@ public class HttpResponse {
         } else {
             SerializableCertificate certif = manager.AddCertificate(_keyValDico);
             obj.addProperty("Created", "Success");
+            obj.addProperty("Begin", CertificateGenerator.CERTIFICATE_FIRST_LINE);
             obj.addProperty("certif", certif.getCertificatBase64());
+            obj.addProperty("End", CertificateGenerator.CERTIFICATE_LAST_LINE);
             obj.addProperty("publicKey", certif.getPublicKeyString());
         }
         this.responseBody = obj.toString();
@@ -204,7 +207,9 @@ public class HttpResponse {
             else
             {
                 obj.addProperty("Found", "Success");
+                obj.addProperty("Begin", CertificateGenerator.CERTIFICATE_FIRST_LINE);
                 obj.addProperty("certif", cert.getCertificatBase64());
+                obj.addProperty("End", CertificateGenerator.CERTIFICATE_LAST_LINE);
                 obj.addProperty("publicKey", cert.getPublicKeyString());
             }
         }
