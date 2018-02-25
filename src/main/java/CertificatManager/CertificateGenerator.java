@@ -3,6 +3,8 @@ package CertificatManager;
 import sun.security.x509.*;
 
 import javax.xml.bind.DatatypeConverter;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.StringBufferInputStream;
 import java.security.cert.*;
 import java.security.*;
@@ -13,6 +15,9 @@ import java.io.IOException;
 public class CertificateGenerator {
 
     private KeyPair lastKeypair;
+
+    public final static String CERTIFICATE_FIRST_LINE = "-----BEGIN CERTIFICATE-----";
+    public final static String CERTIFICATE_LAST_LINE = "-----END CERTIFICATE-----";
 
     public KeyPair getLastKeypair() {
         return lastKeypair;
@@ -36,7 +41,7 @@ public class CertificateGenerator {
         return generateCertificate(distinguishedName, keyPair, 365, "SHA256withRSA");
 
     }
-    private X509Certificate generateCertificate(String dn, KeyPair pair, int days, String algorithm)
+    public X509Certificate generateCertificate(String dn, KeyPair pair, int days, String algorithm)
             throws GeneralSecurityException, IOException
     {
         PrivateKey privkey = pair.getPrivate();
@@ -46,7 +51,7 @@ public class CertificateGenerator {
         CertificateValidity interval = new CertificateValidity(from, to);
         BigInteger sn = new BigInteger(64, new SecureRandom());
         X500Name owner = new X500Name(dn);
-        X500Name issuer = new X500Name("C=toto, ST=bob, L=yey, O=kek, OU=wow, CN=rofl, EMAIL=hehe@pouet.com");
+        X500Name issuer = new X500Name("C=SuperCertif, ST=SuperCertif, L=SuperCertif, O=SuperCertif, OU=SuperCertif, CN=SuperCertif, EMAIL=SuperCertif@certif.com");
 
         info.set(X509CertInfo.VALIDITY, interval);
         info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber(sn));
@@ -71,17 +76,14 @@ public class CertificateGenerator {
     }
 
     public String convertToPem(X509Certificate cert) throws CertificateEncodingException {
+        return DatatypeConverter.printBase64Binary(cert.getEncoded());
 
-        String s = "";
-        s += "-----BEGIN CERTIFICATE-----\n";
-        s += DatatypeConverter.printBase64Binary(cert.getEncoded()) + "\n";
-        s += "-----END CERTIFICATE-----";
-        return s;
     }
 
     public X509Certificate CertificateFromString(String certifString) throws CertificateException {
-
-        StringBufferInputStream inputstream = new StringBufferInputStream(certifString);
+        String finalString = CERTIFICATE_FIRST_LINE + System.lineSeparator() +
+                certifString + System.lineSeparator() + CERTIFICATE_LAST_LINE;
+        StringBufferInputStream inputstream = new StringBufferInputStream(finalString);
         CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
         return (X509Certificate)certFactory.generateCertificate(inputstream);
     }

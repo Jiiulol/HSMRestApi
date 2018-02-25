@@ -3,7 +3,7 @@ package Communicator;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
-import java.net.URLDecoder;
+
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -71,23 +71,15 @@ public class HttpResponse {
     // region private methodes
     private void FillDico() throws Exception
     {
-        String qs = _request.getRequestURI().getRawQuery();
+        String qs = _request.getRequestURI().getQuery();
         if (qs != null) {
-
-            int last = 0, next, l = qs.length();
-            while (last < l) {
-                next = qs.indexOf('&', last);
-                if (next == -1)
-                    next = l;
-
-                if (next > last) {
-                    int eqPos = qs.indexOf('=', last);
-                        if (eqPos < 0 || eqPos > next)
-                            _keyValDico.put(URLDecoder.decode(qs.substring(last, next), "utf-8"), "");
-                        else
-                            _keyValDico.put(URLDecoder.decode(qs.substring(last, eqPos), "utf-8"), URLDecoder.decode(qs.substring(eqPos + 1, next), "utf-8"));
+            for (String param : qs.split("&")) {
+                String pair[] = param.split("=", 2);
+                if (pair.length>1) {
+                    _keyValDico.put(pair[0], pair[1]);
+                }else{
+                    _keyValDico.put(pair[0], "");
                 }
-                last = next + 1;
             }
         }
     }
@@ -146,8 +138,17 @@ public class HttpResponse {
         if (missingValues.contains("Certif")) {
             obj.addProperty("Updated", "Fail");
             obj.addProperty("error", "No certificat value");
-        } else
+        } else {
+            try {
+                manager.UpdateCertificate(manager.GetCertificate(_keyValDico.get("Certif")), _keyValDico);
+
             obj.addProperty("Updated", "Success");
+            } catch (Exception e) {
+                e.printStackTrace();
+                obj.addProperty("Updated", "Fail");
+                obj.addProperty("error", e.getMessage());
+            }
+        }
         this.responseBody = obj.toString();
         this.responseSize = obj.toString().length();
     }
@@ -170,8 +171,8 @@ public class HttpResponse {
         } else {
             SerializableCertificate certif = manager.AddCertificate(_keyValDico);
             obj.addProperty("Created", "Success");
-            obj.addProperty("certif", certif.get_certifString());
-            obj.addProperty("publicKey", certif.get_publicKeyString());
+            obj.addProperty("certif", certif.getCertificatBase64());
+            obj.addProperty("publicKey", certif.getPublicKeyString());
         }
         this.responseBody = obj.toString();
         this.responseSize = obj.toString().length();
@@ -187,8 +188,8 @@ public class HttpResponse {
             if (cert != null)
             {
             obj.addProperty("Found", "Success");
-            obj.addProperty("certif", cert.get_certifString());
-            obj.addProperty("publicKey", cert.get_publicKeyString());
+            obj.addProperty("certif", cert.getCertificatBase64());
+            obj.addProperty("publicKey", cert.getPublicKeyString());
             }
             else
             {
@@ -203,8 +204,8 @@ public class HttpResponse {
             else
             {
                 obj.addProperty("Found", "Success");
-                obj.addProperty("certif", cert.get_certifString());
-                obj.addProperty("publicKey", cert.get_publicKeyString());
+                obj.addProperty("certif", cert.getCertificatBase64());
+                obj.addProperty("publicKey", cert.getPublicKeyString());
             }
         }
         this.responseBody = obj.toString();

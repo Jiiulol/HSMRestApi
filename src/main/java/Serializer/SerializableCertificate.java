@@ -19,9 +19,11 @@ import java.util.List;
 public class SerializableCertificate {
 
     // region members
-    private String _certifString;
-    private String _publicKeyString;
-    private String _privateKeyString;
+    private final String CERTIFICATE_FIRST_LINE = "-----BEGIN CERTIFICATE-----";
+    private final String CERTIFICATE_LAST_LINE = "-----END CERTIFICATE-----";
+    private String CertificatBase64;
+    private String PublicKeyString;
+    private String PrivateKeyString;
 
     private transient X509Certificate certif;
     private transient KeyPair keyPair;
@@ -35,18 +37,18 @@ public class SerializableCertificate {
         try {
             this.certif = certif;
             keyPair = keypair;
-            _certifString = generator.convertToPem(certif);
-            _publicKeyString = Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded());
-            _privateKeyString = Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded());
+            CertificatBase64 = generator.convertToPem(certif);
+            PublicKeyString = Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded());
+            PrivateKeyString = Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded());
         } catch (CertificateEncodingException e) {
             e.printStackTrace();
         }
     }
 
-    public SerializableCertificate(String _certifString, String _publicKeyString, String _privateKeyString) {
-        this._certifString = _certifString;
-        this._publicKeyString = _publicKeyString;
-        this._privateKeyString = _privateKeyString;
+    public SerializableCertificate(String CertificatBase64, String PublicKeyString, String PrivateKeyString) {
+        this.CertificatBase64 = CertificatBase64;
+        this.PublicKeyString = PublicKeyString;
+        this.PrivateKeyString = PrivateKeyString;
         Initialize();
 
     }
@@ -56,15 +58,15 @@ public class SerializableCertificate {
         try {
 
         CertificateGenerator generator = new CertificateGenerator();
-        certif = generator.CertificateFromString(_certifString);
+        certif = generator.CertificateFromString(CertificatBase64);
 
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
-        byte[] publicBytes = Base64.getDecoder().decode(_publicKeyString);
+        byte[] publicBytes = Base64.getDecoder().decode(PublicKeyString);
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
         PublicKey pubKey = keyFactory.generatePublic(keySpec);
 
-        byte[] privateBytes = Base64.getDecoder().decode(_privateKeyString);
+        byte[] privateBytes = Base64.getDecoder().decode(PrivateKeyString);
         PKCS8EncodedKeySpec privatekeySpec = new PKCS8EncodedKeySpec(privateBytes);
         PrivateKey privateKey = keyFactory.generatePrivate(privatekeySpec);
 
@@ -82,28 +84,28 @@ public class SerializableCertificate {
     // endregion
 
     // region Getter / setter
-    public String get_certifString() {
-        return _certifString;
+    public String getCertificatBase64() {
+        return CertificatBase64;
     }
 
-    public void set_certifString(String _certifString) {
-        this._certifString = _certifString;
+    public void setCertificatBase64(String certificatBase64) {
+        this.CertificatBase64 = certificatBase64;
     }
 
-    public String get_publicKeyString() {
-        return _publicKeyString;
+    public String getPublicKeyString() {
+        return PublicKeyString;
     }
 
-    public void set_publicKeyString(String _publicKeyString) {
-        this._publicKeyString = _publicKeyString;
+    public void setPublicKeyString(String publicKeyString) {
+        this.PublicKeyString = publicKeyString;
     }
 
-    public String get_privateKeyString() {
-        return _privateKeyString;
+    public String getPrivateKeyString() {
+        return PrivateKeyString;
     }
 
-    public void set_privateKeyString(String _privateKeyString) {
-        this._privateKeyString = _privateKeyString;
+    public void setPrivateKeyString(String privateKeyString) {
+        this.PrivateKeyString = privateKeyString;
     }
 
     public X509Certificate getCertif() {
@@ -136,8 +138,9 @@ public class SerializableCertificate {
 
             SerializableCertificate certif = (SerializableCertificate)obj;
 
-            Gson gson = new Gson();
-            return gson.toJson(this).equals(gson.toJson(certif));
+            if (this.CertificatBase64 == certif.getCertificatBase64() &&
+                    this.getPublicKeyString() == certif.getPublicKeyString())
+            return true;
         }
         return false;
     }
